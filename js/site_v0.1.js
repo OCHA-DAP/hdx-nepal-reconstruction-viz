@@ -1,9 +1,7 @@
 var config = {
     currentDataLink: 'link',
     fslSurveyed: 'no',
-    protectionSurveyed: 'no',
-    questionsLink: 'qlink',
-    dateHeader: 'date'
+    protectionSurveyed: 'no'
 };
 
 function hxlProxyToJSON(input){
@@ -54,16 +52,14 @@ var chartMargins = {top:0, left:15, right:50, bottom: 30};
 var initSettings = (function(){
     $.ajax({
         type: 'GET',
-        //test setting link
-        //url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D679385724&force=on',
-        //production link
-        url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D487730406&force=on',
+        url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D679385724&force=on',
+        //url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D487730406&force=on',
         format: 'json',
         async: false,
         success: function(args){
             var dataSettings = hxlProxyToJSON(args);
             dataSettings.forEach( function(element) {
-                settingsData[element['#meta+code']] = {'year': element['#date+year'], 'month': element['#date+month'], 'link': element['#meta+link'], 'fslSurveyed': element['#meta+fsl'], 'protectionSurveyed':element['#meta+protection'], 'qLink':element['#meta+link+questions']};
+                settingsData[element['#meta+code']] = {'year': element['#date+year'], 'month': element['#date+month'], 'link': element['#meta+link'], 'fslSurveyed': element['#meta+fsl'], 'protectionSurveyed':element['#meta+protection']};
             });
         }
     })
@@ -72,26 +68,24 @@ var initSettings = (function(){
 initConfig();
 
 //initialize configs and surveyData crossfilter
-function initConfig (argt) {
-
+function initConfig (argument) {
     var big = 1 ;
     for (key in settingsData){
         var current = parseFloat(key);
         current >= big ? big = current : '';
     }
     // console.log('the winner is ', big);
-    if (arguments.length >0) {
-        console.log(argt);
-        big = argt ;
+
+    if (big == 'undefined') {
+        big = 201711 ;
     }
+
     let fsl = settingsData[big].fslSurveyed;
     let prct =  settingsData[big].protectionSurveyed;
 
     config.currentDataLink = settingsData[big].link ;
     config.fslSurveyed = settingsData[big].fslSurveyed;
     config.protectionSurveyed = settingsData[big].protectionSurveyed;
-    config.questionsLink = settingsData[big].qLink;
-    config.dateHeader = settingsData[big].month+" "+settingsData[big].year;
 
     dataSurvey = (function(){
         var a;
@@ -109,39 +103,6 @@ function initConfig (argt) {
     })();
     surveyData = crossfilter (dataSurvey);
     
-    sectorQuestions = (function(){
-    var a;
-    $.ajax({
-        type: 'GET',
-        url: config.questionsLink,
-        format: 'json',
-        async: false,
-        success: function(dataArgs){
-            a = hxlProxyToJSON(dataArgs);
-
-        }
-    });
-    return a;
-    })();
-
-    var j = 0,
-        k = 0,
-        l = 0;
-
-    sectorQuestions.forEach( function(element) {
-        if (element['#sector'] == 'reconstruction') {
-            reconstructionDivs[j] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
-            j++;
-            
-        } else if (element['#sector'] == 'fsl') {
-            foodSecDivs[k] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
-            k++;
-            
-        } else {
-            protectionDivs[l] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
-            l++;
-        }
-    });
     // generate dropdown menu selection based on availability on the sectors
     // if (prct == 'no') {
     //     $('.surveySelectionMenu').children().filter(function(index, option) {
@@ -190,9 +151,7 @@ function computeChartHeight(group) {
     return (count*(chartBarGap+chartBarHeight)) + (margins+chartBarGap);
 };
 
-function generateDate (argument) {
-    $('.description h1 span').text("Data as of "+config.dateHeader);
-}
+
 
 // Generate right sidebar charts and map
 function generateCharts() {
@@ -262,7 +221,7 @@ function generateCharts() {
         .colors(blue)
         .elasticX(true)
         .renderTitle(false)
-        .xAxis().ticks(0);
+        .xAxis().ticks(5);
 
 
     // occupationChart.width(sideChartWidth)
@@ -297,7 +256,7 @@ function generateCharts() {
         .colors(blue)
         .elasticX(true)
         .renderTitle(false)
-        .xAxis().ticks(0);
+        .xAxis().ticks(5);
 
     var genderColors = d3.scale.ordinal().range([blue, blueLight]);
 
@@ -354,7 +313,7 @@ function generateCharts() {
 
     $('.viz-container').show();
     $('.loader').hide();
-    generateDate();
+    
     dc.renderAll();
 
     //tooltip events
@@ -405,7 +364,7 @@ function generateCharts() {
             })
             .renderTitle(false)
             .elasticX(true)
-            .xAxis().ticks(0);
+            .xAxis().ticks(5);
             
             chart.render();
 
@@ -466,7 +425,7 @@ for (key in settingsData){
 $('.panel-body a').click(function(e){
     var id = $(this).attr('id');
     initConfig(id);
-    // $('.viz-container').hide();
+    $('.viz-container').hide();
     $('.loader').show();
     generateCharts();
 });
@@ -484,13 +443,41 @@ var settingsCall = $.ajax({
     dataType: 'json',
 });
 
+var sectionQuestionsCall = $.ajax({ 
+    type: 'GET', 
+    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D1270569691&force=on',
+    //url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1trL6M1_ousu_G0p9qoMw65TrbrX-Zi2gAvOzankIOH0%2Fedit%23gid%3D0&force=on',
+    dataType: 'json',
+});
 
-$.when(geodataCall,settingsCall).then(function (geomArgs, settingsArgs) {
+
+
+$.when(geodataCall,sectionQuestionsCall, settingsCall).then(function (geomArgs, sectorQuestionsArgs, settingsArgs) {
     geom = geomArgs[0];
-    // var dataSettings = hxlProxyToJSON(settingsArgs[0]);
-    // dataSettings.forEach( function(element) {
-    //     settingsData[element['#meta+code']] = {'year': element['#date+year'], 'month': element['#date+month'], 'link': element['#meta+link'], 'fslSurveyed': element['#meta+fsl'], 'protectionSurveyed':element['#meta+protection']};
-    // });
+    var dataSettings = hxlProxyToJSON(settingsArgs[0]);
+    dataSettings.forEach( function(element) {
+        settingsData[element['#meta+code']] = {'year': element['#date+year'], 'month': element['#date+month'], 'link': element['#meta+link'], 'fslSurveyed': element['#meta+fsl'], 'protectionSurveyed':element['#meta+protection']};
+    });
+
+    var sectorQuestions = hxlProxyToJSON(sectorQuestionsArgs[0]);
+    var j = 0,
+        k = 0,
+        l = 0;
+
+    sectorQuestions.forEach( function(element) {
+        if (element['#sector'] == 'reconstruction') {
+            reconstructionDivs[j] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
+            j++;
+            
+        } else if (element['#sector'] == 'fsl') {
+            foodSecDivs[k] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
+            k++;
+            
+        } else {
+            protectionDivs[l] = {'question': element['#meta+question'], 'tag': element['#meta+tag']};
+            l++;
+        }
+    });
 
     generateCharts();
 

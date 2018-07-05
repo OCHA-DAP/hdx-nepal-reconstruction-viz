@@ -75,6 +75,10 @@ a:hover {
     transform: rotate(-45deg);
 }
 
+.pull-right {
+    font-size: 14px;
+    color: #F2645A;
+}
 .x-axis-label{
     font-size: 0.9em;
     display: none;
